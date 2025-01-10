@@ -42,4 +42,6 @@ export const useUserStore = defineStore("user", {
             }
         },
     },
+    // 启用持久化，默认保存到 localStorage
+    persist: true,
 });

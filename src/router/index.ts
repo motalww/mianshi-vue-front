@@ -1,25 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import { menus } from './menu.ts';  // 引入菜单配置
 
+// 创建路由实例
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-    },
-    {
-      path: '/banks',
-      name: 'banks',
-      component: () => import('../views/banks/index.vue'),
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
-    },
-  ],
-})
+  history: createWebHistory(),
+  routes: menus,  // 动态路由配置
+});
 
-export default router
+export default router;
