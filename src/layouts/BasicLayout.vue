@@ -54,9 +54,13 @@
 
 <script setup>
 import { useUserStore } from "@/stores/user";
+import {computed} from "vue";
 
 const userStore = useUserStore(); // 使用 Pinia Store
-const user = userStore.user;
+const user = computed(() => {
+  return userStore.user;
+})
+
 
 </script>
 

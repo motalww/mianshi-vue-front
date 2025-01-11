@@ -181,7 +181,7 @@ declare namespace API {
     id?: number;
   };
 
-  type getUserSignInUsingPOSTParams = {
+  type getUserSignInRecordUsingGETParams = {
     /** year */
     year?: number;
   };

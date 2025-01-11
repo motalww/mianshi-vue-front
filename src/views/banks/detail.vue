@@ -24,7 +24,7 @@
         :default-sort="{ prop: 'difficulty', order: 'ascending' }"
     >
       <!-- 题目列 -->
-      <el-table-column prop="title" label="题目"  align="left">
+      <el-table-column prop="question.title" label="题目"  align="left">
         <template #default="scope">
         </template>
       </el-table-column>
@@ -39,7 +39,7 @@
       </el-table-column>
 
       <!-- 标签列 -->
-      <el-table-column prop="tagList" label="标签" align="right" >
+      <el-table-column prop="question.tagList" label="标签" align="right" >
         <template #default="scope">
           <el-tag v-for="(tag, index) in scope.row.tagList" :key="index" effect="plain">
             {{ tag }}
@@ -55,9 +55,9 @@
 import {ref, watch} from 'vue'; // 引入 Composition API
 import {useRoute} from 'vue-router';
 import {getQuestionBankVoByIdUsingGet} from "@/api/questionBankController.ts";
+import {listQuestionBankQuestionVoByPageUsingPost} from "@/api/questionBankQuestionController.ts";
 import getQuestionBankVOByIdUsingGETParams = API.getQuestionBankVOByIdUsingGETParams;
-import {listQuestionVoByPageUsingPost} from "@/api/questionController.ts";
-import QuestionQueryRequest = API.QuestionQueryRequest;
+import QuestionBankQuestionQueryRequest = API.QuestionBankQuestionQueryRequest;
 
 
 // 获取动态路由参数
@@ -69,7 +69,7 @@ const bankBody:getQuestionBankVOByIdUsingGETParams={
   id:route.params.bankId
 }
 const questionList=ref([])
-const questionBody:QuestionQueryRequest={
+const questionBody:QuestionBankQuestionQueryRequest={
   questionBankId:route.params.bankId
 }
 
@@ -79,8 +79,8 @@ const fetchBankDetails = async (bankId) => {
     console.log(bankId)
     const bankRes = await getQuestionBankVoByIdUsingGet(bankBody); // 调用后端 API
     bank.value = bankRes.data; // 存储响应数据
-    const questionRes=await listQuestionVoByPageUsingPost(questionBody)
-    console.log(questionRes)
+    const questionRes=await listQuestionBankQuestionVoByPageUsingPost(questionBody)
+    console.log(questionRes.data.records)
     questionList.value=questionRes.data.records
   } catch (error) {
     console.error('获取题库详情失败:', error);

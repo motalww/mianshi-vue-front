@@ -46,6 +46,14 @@ export const menus: Array<RouteRecordRaw> = [
                     title: "登录",
                 },
                 component:()=>import("@/views/user/login/login.vue")
+            },
+            {
+                path: "/user/center",
+                name: "用户中心",
+                meta: {
+                    title: "用户中心",
+                },
+                component:()=>import("@/views/user/center/center.vue")
             }
         ]
     },
