@@ -1,67 +1,155 @@
 <template>
   <div class="common-layout">
-    <el-container>
+    <!-- 使用 Ant Design Vue 的 Layout 布局 -->
+    <a-layout>
       <!-- 顶部导航栏 -->
-      <el-header class="header">
+      <a-layout-header class="header">
         <div class="header-content">
           <div class="logo">
-            <img src="/src/assets/logo.svg" alt="Logo" />
+            <img src="/src/assets/logo.svg" alt="Logo"/>
             面试刷题神器
           </div>
-          <el-menu
-              default-active="/"
-              mode="horizontal"
-              background-color="#ffffff"
-              text-color="#333"
-              active-text-color="#000000"
-              class="menu"
-              router
-          >
-            <el-menu-item index="/">首页</el-menu-item>
-            <el-menu-item index="/banks"  >题库</el-menu-item>
-            <el-menu-item index="/questions">题目</el-menu-item>
-            <el-menu-item ><el-icon><Monitor /></el-icon>管理</el-menu-item>
-          </el-menu>
+          <a-menu v-model:selectedKeys="current" :items="items"
+                  mode="horizontal"
+                  theme="light"
+                  @select="handleSelect"
+                  default-selected-keys="/"
+                  class="menu"/>
           <div class="header-right">
-            <el-input placeholder="搜索题目" prefix-icon="Search" class="search-input" />
+            <a-input-search
+                v-model:value="searchValue"
+                placeholder="请输入题目"
+                style="width: 200px"
+                :loading="isLoading"
+                @search="onSearch"
+            />
             <div class="user-info">
-              <!-- 用户头像 -->
-              <el-avatar
-                  size="40"
-                  class="user-avatar"
-                  :src="user.userAvatar"
-                  style="cursor: pointer;"
-              ></el-avatar>
+              <!-- 用户头像与下拉菜单 -->
+              <a-dropdown placement="bottom">
+                <!-- 触发下拉菜单的内容 -->
+                <template #default>
+                  <a-avatar
+                      size="large"
+                      class="user-avatar"
+                      :src="user.userAvatar"
+                      style="cursor: pointer;"
+                  />
+                </template>
+                <!-- 下拉菜单内容 -->
+                <template #overlay>
+                  <a-menu @click="dropDownClick">
+                    <a-menu-item key="/user/center">个人中心</a-menu-item>
+                    <a-menu-item key="/logout">退出登录</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
               <!-- 用户名 -->
               <span class="user-name">{{ user.userName }}</span>
             </div>
           </div>
         </div>
-      </el-header>
+      </a-layout-header>
 
       <!-- 主体内容 -->
-      <el-main class="main">
-       <router-view/>
-      </el-main>
+      <a-layout-content class="main">
+        <router-view/>
+      </a-layout-content>
 
       <!-- 底部栏 -->
-      <el-footer class="footer">
-        <p>© 2025 面试刷题神器    - W</p>
-      </el-footer>
-    </el-container>
+      <a-layout-footer class="footer">
+        <p>© 2025 面试刷题神器 - W</p>
+      </a-layout-footer>
+    </a-layout>
   </div>
 </template>
 
-<script setup>
-import { useUserStore } from "@/stores/user";
-import {computed} from "vue";
+<script setup lang="ts">
+import {useUserStore} from "@/stores/user";
+import {h, computed, ref} from "vue";
+import {CrownOutlined} from '@ant-design/icons-vue';
+import {MenuProps} from 'ant-design-vue';
+import {message} from "ant-design-vue";
+import router from "@/router";
+import {userLogoutUsingPost} from "@/api/userController.ts";
+
+const items = ref<MenuProps['items']>([
+  {
+    key: '/',
+    label: '首页',
+    title: '首页',
+  },
+  {
+    key: '/banks',
+    label: '题库',
+    title: '题库',
+
+  },
+  {
+    key: '/questions',
+    label: '题目',
+    title: '题目',
+  },
+  {
+    label: '管理',
+    icon: () => h(CrownOutlined),
+    title: '管理',
+    children: [
+      {
+        type: 'group',
+        children: [
+          {
+            label: '用户管理',
+            key: '/admin/user',
+          },
+          {
+            label: '题目管理',
+            key: '/admin/questions',
+          },
+          {
+            label: '题库管理',
+            key: '/admin/banks',
+          },
+        ],
+      },
+    ],
+  },
+]);
+
+// 处理菜单选择
+const handleSelect = (e) => {
+  router.push(e.key); // 使用 vue-router 跳转
+}
 
 const userStore = useUserStore(); // 使用 Pinia Store
 const user = computed(() => {
   return userStore.user;
-})
+});
 
 
+const isLoading = ref<boolean>(false)
+const searchValue = ref<string>(""); // 搜索值
+
+const onSearch = async () => {
+  isLoading.value = true;
+  message.success("触发搜索");
+  setTimeout(() => {
+    isLoading.value = false;  // 停止加载
+  }, 3000); // 3000 毫秒 = 3 秒
+}
+
+const dropDownClick: MenuProps['dropDownClick'] =async ({key}) => {
+  if(key==='/user/center'){
+    await router.push(key)
+  }else if(key==='/logout'){
+    try {
+      await userLogoutUsingPost();
+      userStore.clearUserInfo()
+      message.success("退出登录成功")
+    }catch(error) {
+      message.error(error.message)
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -103,6 +191,7 @@ const user = computed(() => {
 
 .menu {
   flex: 1;
+  font-size: 18px;
   margin-left: 20px;
 }
 
@@ -119,6 +208,7 @@ const user = computed(() => {
 /* 用户信息容器 */
 .user-info {
   display: flex;
+  margin-right: 15px;
   align-items: center;
   gap: 10px; /* 头像和用户名之间的间距 */
 }

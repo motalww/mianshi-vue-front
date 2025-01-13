@@ -1,8 +1,8 @@
 <template>
   <div id="userLoginPage">
-    <el-card class="login-card">
+    <a-card class="login-card">
       <div class="login-header">
-        <el-image
+        <a-img
             src="/logo.svg"
             alt="面试平台"
             class="login-logo"
@@ -12,63 +12,68 @@
       </div>
 
       <!-- 登录表单 -->
-      <el-form
+      <a-form
           :model="loginForm"
           :rules="rules"
           ref="loginFormRef"
-          label-width="100px"
           class="login-form"
       >
         <!-- 用户账号 -->
-        <el-form-item label="账号" prop="userAccount">
-          <el-input
-              v-model="loginForm.userAccount"
+        <a-form-item label="账号" name="userAccount">
+          <a-input
+              v-model:value="loginForm.userAccount"
               placeholder="请输入用户账号"
-              prefix-icon="User"
               size="large"
-          />
-        </el-form-item>
+          >
+            <template #prefix>
+              <UserOutlined />
+            </template>
+          </a-input>
+        </a-form-item>
 
         <!-- 用户密码 -->
-        <el-form-item label="密码" prop="userPassword">
-          <el-input
-              v-model="loginForm.userPassword"
+        <a-form-item label="密码" name="userPassword">
+          <a-input
+              v-model:value="loginForm.userPassword"
               type="password"
               placeholder="请输入密码"
-              prefix-icon="Lock"
               size="large"
-              show-password
-          />
-        </el-form-item>
+          >
+            <template #prefix>
+              <LockOutlined />
+            </template>
+          </a-input>
+        </a-form-item>
 
         <!-- 登录按钮 -->
-        <el-form-item style="width: 100%; text-align: center;">
-          <el-button
+        <a-form-item style="width: 100%; text-align: center;">
+          <a-button
               type="primary"
-              size="default"
+              size="middle"
               @click="doLogin"
               :loading="loading"
-              style="margin-left: 25%;width: 100px"
+              style="width: 100px"
           >
             登录
-          </el-button>
-        </el-form-item>
-      </el-form>
+          </a-button>
+        </a-form-item>
+      </a-form>
 
       <div class="login-footer">
         <span>还没有账号？</span>
-        <el-link href="/user/register" type="primary">去注册</el-link>
+        <a-link href="/user/register" type="primary">去注册</a-link>
       </div>
-    </el-card>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import { userLoginUsingPost } from "@/api/userController.ts"; // 后端 API
-import { useUserStore } from "@/stores/user.ts"; // Pinia 用户 Store
+import {reactive, ref} from "vue";
+import {useRouter} from "vue-router";
+import {message} from "ant-design-vue";
+import {userLoginUsingPost} from "@/api/userController.ts"; // 后端 API
+import {useUserStore} from "@/stores/user.ts"; // Pinia 用户 Store
+import {UserOutlined, LockOutlined} from "@ant-design/icons-vue";
 
 const router = useRouter(); // Vue Router
 const userStore = useUserStore(); // Pinia Store
@@ -82,10 +87,10 @@ const loginForm = reactive({
 // 表单验证规则
 const rules = {
   userAccount: [
-    { required: true, message: "请输入用户账号", trigger: "blur" },
+    {required: true, message: "请输入用户账号", trigger: "blur"},
   ],
   userPassword: [
-    { required: true, message: "请输入密码", trigger: "blur" },
+    {required: true, message: "请输入密码", trigger: "blur"},
   ],
 };
 
@@ -99,34 +104,33 @@ const loading = ref(false);
 const doLogin = async () => {
   if (!loginFormRef.value) return;
 
-  loginFormRef.value.validate(async (valid: boolean) => {
-    if (!valid) {
-      ElMessage.error("请正确填写表单信息");
+  try {
+    const isValid = await loginFormRef.value.validate();
+    if (!isValid) {
+      message.error("请正确填写表单信息");
       return;
     }
 
     loading.value = true;
-    try {
-      // 调用后端登录 API
-      const res = await userLoginUsingPost(loginForm);
+    // 调用后端登录 API
+    const res = await userLoginUsingPost(loginForm);
 
-      if (res && res.data) {
-        ElMessage.success("登录成功");
-        // 保存用户信息到 Pinia
-        userStore.setUserInfo(res.data);
+    if (res && res.data) {
+      message.success("登录成功");
+      // 保存用户信息到 Pinia
+      userStore.setUserInfo(res.data);
 
-        // 跳转到首页
-        await router.replace("/");
-      } else {
-        ElMessage.error(res.message || "登录失败");
-      }
-    } catch (error) {
-      ElMessage.error("登录失败，请稍后重试");
-      console.error(error);
-    } finally {
-      loading.value = false;
+      // 跳转到首页
+      await router.replace("/");
+    } else {
+      message.error(res.message || "登录失败");
     }
-  });
+  } catch (error) {
+    message.error("登录失败，请稍后重试");
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
@@ -140,9 +144,9 @@ const doLogin = async () => {
 }
 
 .login-card {
-  width: 480px;
+  width: 500px;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: 9px;
 }
 
 .login-header {
@@ -158,7 +162,6 @@ const doLogin = async () => {
 
 .login-form {
   margin-top: 20px;
-
 }
 
 .login-footer {

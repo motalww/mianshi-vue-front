@@ -1,6 +1,6 @@
 <template>
   <div class="calendar-chart">
-    <el-alert v-if="loading" type="info" title="正在加载刷题签到记录..." />
+    <a-spin v-if="loading" size="large" tip="正在加载刷题签到记录..." />
     <div v-else>
       <div ref="chartRef" class="chart-container" />
     </div>

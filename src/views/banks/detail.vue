@@ -1,109 +1,115 @@
 <template>
-  <div class="card-container" v-if="bank">
+  <div v-if="bank" class="card-container">
     <div class="card-icon">
-      <img :src="bank.picture" alt="Icon" class="icon-image" />
+      <img :src="bank.picture" alt="题库图标" class="icon-image" />
     </div>
     <div class="card-content">
       <h1 class="card-title">{{ bank.title }}</h1>
       <p class="card-description">{{ bank.description }}</p>
       <div class="card-actions">
-        <button class="btn btn-primary" @click="startPractice">开始刷题</button>
-        <button class="btn btn-secondary" @click="share">分享</button>
+        <a-button type="primary" @click="startPractice">开始刷题</a-button>
+        <a-button type="default" @click="share">分享</a-button>
       </div>
     </div>
   </div>
+
+  <!-- 加载中提示 -->
   <div v-else>
     <p>加载中...</p>
   </div>
+
+  <!-- 题目列表 -->
   <div class="question-list">
-    <h2>题目列表</h2>
-    <el-table
-        :data="questionList"
-        stripe
-        :header-cell-style="{fontSize:'16px',color:'black'}"
-        :default-sort="{ prop: 'difficulty', order: 'ascending' }"
+    <a-table
+        :dataSource="questionList"
+        :columns="columns"
+        row-key="id"
+        :pagination="false"
     >
-      <!-- 题目列 -->
-      <el-table-column prop="question.title" label="题目"  align="left">
-        <template #default="scope">
-        </template>
-      </el-table-column>
-
-      <!-- 难度列 -->
-      <el-table-column prop="difficulty" label="难度" align="right">
-<!--        <template #default="scope">-->
-<!--          <el-tag v-for="(tag, index) in scope.row" :key="index" effect="plain">-->
-<!--            {{ tag }}-->
-<!--          </el-tag>-->
-<!--        </template>-->
-      </el-table-column>
-
-      <!-- 标签列 -->
-      <el-table-column prop="question.tagList" label="标签" align="right" >
-        <template #default="scope">
-          <el-tag v-for="(tag, index) in scope.row.tagList" :key="index" effect="plain">
+      <template #title>题目列表</template>
+      <!-- 自定义渲染题目列 -->
+      <template #bodyCell="{ record, column }">
+        <div v-if="column.key === 'title'">
+          <a>{{ record.question.title }}</a>
+        </div>
+        <div v-else-if="column.key === 'tags'">
+          <a-tag v-for="(tag, index) in record.question.tagList" :key="index">
             {{ tag }}
-          </el-tag>
-        </template>
-      </el-table-column>
-    </el-table>
+          </a-tag>
+        </div>
+      </template>
+    </a-table>
   </div>
 </template>
 
-
 <script setup lang="ts">
-import {ref, watch} from 'vue'; // 引入 Composition API
-import {useRoute} from 'vue-router';
-import {getQuestionBankVoByIdUsingGet} from "@/api/questionBankController.ts";
-import {listQuestionBankQuestionVoByPageUsingPost} from "@/api/questionBankQuestionController.ts";
+import { ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { getQuestionBankVoByIdUsingGet } from "@/api/questionBankController.ts";
+import { listQuestionBankQuestionVoByPageUsingPost } from "@/api/questionBankQuestionController.ts";
 import getQuestionBankVOByIdUsingGETParams = API.getQuestionBankVOByIdUsingGETParams;
 import QuestionBankQuestionQueryRequest = API.QuestionBankQuestionQueryRequest;
-
+import { message } from "ant-design-vue";
 
 // 获取动态路由参数
 const route = useRoute();
 
 // 响应式变量存储数据
 const bank = ref(null);
-const bankBody:getQuestionBankVOByIdUsingGETParams={
-  id:route.params.bankId
-}
-const questionList=ref([])
-const questionBody:QuestionBankQuestionQueryRequest={
-  questionBankId:route.params.bankId
-}
+const bankBody: getQuestionBankVOByIdUsingGETParams = {
+  id: route.params.bankId,
+};
+const questionList = ref([]);
+const questionBody: QuestionBankQuestionQueryRequest = {
+  questionBankId: route.params.bankId,
+};
+
+// 定义列
+const columns = [
+  {
+    title: "题目",
+    dataIndex: "question.title",
+    key: "title",
+  },
+  {
+    title: "标签",
+    dataIndex: "question.tagList",
+    key: "tags",
+  },
+];
 
 // 定义方法：根据 ID 获取题库详情
-const fetchBankDetails = async (bankId) => {
+const fetchBankDetails = async () => {
   try {
-    console.log(bankId)
-    const bankRes = await getQuestionBankVoByIdUsingGet(bankBody); // 调用后端 API
-    bank.value = bankRes.data; // 存储响应数据
-    const questionRes=await listQuestionBankQuestionVoByPageUsingPost(questionBody)
-    console.log(questionRes.data.records)
-    questionList.value=questionRes.data.records
+    // 获取题库详情
+    const bankRes = await getQuestionBankVoByIdUsingGet(bankBody);
+    bank.value = bankRes.data;
+
+    // 获取题库中的问题列表
+    const questionRes = await listQuestionBankQuestionVoByPageUsingPost(questionBody);
+    questionList.value = questionRes.data.records;
   } catch (error) {
-    console.error('获取题库详情失败:', error);
+    message.error(`获取题库详情失败:${error.message},请稍后重试`);
   }
 };
 
 // 初始化时加载数据 & 监听路由参数变化
 watch(
-    () => route.params.bankId, // 监听 id 参数
+    () => route.params.bankId, // 监听 id 参数变化
     (newId) => {
-      if (newId) fetchBankDetails(newId);
+      if (newId) fetchBankDetails();
     },
-    {immediate: true} // 组件加载时立即触发
+    { immediate: true } // 组件加载时立即触发
 );
 
 // 开始刷题按钮逻辑
 const startPractice = () => {
-  alert(`开始刷题: ${bank.value.title}`);
+  message.success(`开始刷题: ${bank.value.title}`);
 };
 
 // 分享按钮逻辑
 const share = () => {
-  alert(`分享题库: ${bank.value.title}`);
+  message.success(`分享题库: ${bank.value.title}`);
 };
 </script>
 
@@ -154,6 +160,11 @@ const share = () => {
   gap: 10px;
 }
 
+.question-list {
+  margin-top: 20px;
+}
+
+/* 按钮样式 */
 .btn {
   padding: 8px 16px;
   font-size: 14px;
@@ -162,67 +173,7 @@ const share = () => {
   cursor: pointer;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-.btn-secondary {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.btn-secondary:hover {
-  background-color: #e0e0e0;
-}
-
-/* 表格样式 */
-.question-list {
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #fff;
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-}
-.el-table th {
-  white-space: nowrap; /* 禁止换行 */
-  text-align: center; /* 居中对齐 */
-  line-height: 1.6; /* 正常的行高 */
-  font-size: 14px; /* 字体大小 */
-  font-weight: bold; /* 加粗 */
-  color: #333; /* 颜色 */
-}
-
-h2 {
-  margin-bottom: 20px;
-  font-size: 24px;
-  color: #333;
-}
-
-
-.el-table td {
-  padding: 12px 10px;
-}
-
-
-.el-table tr:hover {
-  background-color: #f9f9f9;
-}
-
-.question-title {
-  color: #007bff;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.question-title:hover {
-  text-decoration: underline;
-}
-
+/* 难度样式 */
 .difficulty-easy {
   color: #28a745;
   font-weight: bold;
@@ -238,9 +189,9 @@ h2 {
   font-weight: bold;
 }
 
+/* 标签样式 */
 .tag {
   margin-right: 5px;
   font-size: 12px;
 }
 </style>
-

@@ -1,29 +1,29 @@
 <template>
   <div id="userCenterPage" class="max-width-content">
-    <el-row >
+    <a-row>
       <!-- 左侧用户信息 -->
-      <el-col :span="6">
-        <el-card class="user-card" style="text-align: center;">
-          <el-avatar :src="user.userAvatar" size="72" />
+      <a-col :span="6">
+        <a-card class="user-card" style="text-align: center;">
+          <a-avatar :src="user.userAvatar" size="72" />
           <div style="margin-bottom: 16px" />
-        </el-card>
-      </el-col>
+        </a-card>
+      </a-col>
 
       <!-- 右侧内容部分 -->
-      <el-col :span="18">
-        <el-card :tab-list="tabList" v-model:active-tab="activeTabKey">
+      <a-col :span="18">
+        <a-card :tab-list="tabList" v-model:active-tab="activeTabKey">
           <!-- 刷题记录 -->
           <template #default>
             <div v-if="activeTabKey === 'record'">
-                <calendar/>
+              <calendar />
             </div>
             <div v-if="activeTabKey === 'others'">
               bbb
             </div>
           </template>
-        </el-card>
-      </el-col>
-    </el-row>
+        </a-card>
+      </a-col>
+    </a-row>
   </div>
 </template>
 
@@ -32,7 +32,7 @@ import { ref } from "vue";
 import { useUserStore } from "@/stores/user";
 import Calendar from "@/views/user/center/calendar.vue";
 
-// 获取 Vuex store 状态
+// 获取 Pinia store 状态
 const userStore = useUserStore(); // 使用 Pinia Store
 const user = userStore.user; // 获取登录的用户信息
 
@@ -41,8 +41,8 @@ const activeTabKey = ref("record");
 
 // Tab 列表配置
 const tabList = [
-  { key: "record", label: "刷题记录" },
-  { key: "others", label: "其他" },
+  { key: "record", tab: "刷题记录" },
+  { key: "others", tab: "其他" },
 ];
 </script>
 
