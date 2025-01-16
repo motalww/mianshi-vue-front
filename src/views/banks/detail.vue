@@ -1,55 +1,63 @@
 <template>
-  <div v-if="bank" class="card-container">
-    <div class="card-icon">
-      <img :src="bank.picture" alt="题库图标" class="icon-image" />
-    </div>
-    <div class="card-content">
-      <h1 class="card-title">{{ bank.title }}</h1>
-      <p class="card-description">{{ bank.description }}</p>
-      <div class="card-actions">
-        <a-button type="primary" @click="startPractice">开始刷题</a-button>
-        <a-button type="default" @click="share">分享</a-button>
+  <div v-if="bank">
+    <!-- 外层容器 -->
+    <a-card class="card-container">
+      <div class="card-content-wrapper">
+        <!-- 左侧图片 -->
+        <div class="card-icon">
+          <img :src="bank.picture" alt="题库图标" class="icon-image"/>
+        </div>
+        <!-- 右侧内容 -->
+        <div class="card-content">
+          <h1 class="card-title">{{ bank.title }}</h1>
+          <p class="card-description">{{ bank.description }}</p>
+          <div class="card-actions">
+            <a-button type="primary" @click="startPractice">开始刷题</a-button>
+            <a-button type="default" @click="share">分享</a-button>
+          </div>
+        </div>
       </div>
-    </div>
+    </a-card>
   </div>
 
   <!-- 加载中提示 -->
-  <div v-else>
-    <p>加载中...</p>
+  <div v-else class="loading-container">
+    <a-spin size="large" tip="正在加载题库和题目..."/>
   </div>
 
   <!-- 题目列表 -->
   <div class="question-list">
-    <a-table
-        :dataSource="questionList"
-        :columns="columns"
-        row-key="id"
-        :pagination="false"
-    >
-      <template #title>题目列表</template>
-      <!-- 自定义渲染题目列 -->
-      <template #bodyCell="{ record, column }">
-        <div v-if="column.key === 'title'">
-          <a>{{ record.question.title }}</a>
-        </div>
-        <div v-else-if="column.key === 'tags'">
-          <a-tag v-for="(tag, index) in record.question.tagList" :key="index">
-            {{ tag }}
-          </a-tag>
-        </div>
-      </template>
-    </a-table>
+    <a-card title="题目列表" class="card-container">
+      <a-table
+          :dataSource="questionList"
+          :columns="columns"
+          row-key="id"
+          :pagination="false"
+      >
+        <!-- 自定义渲染题目列 -->
+        <template #bodyCell="{ record, column }">
+          <div v-if="column.key === 'title'">
+            <a>{{ record.question.title }}</a>
+          </div>
+          <div v-else-if="column.key === 'tags'">
+            <a-tag v-for="(tag, index) in record.question.tagList" :key="index">
+              {{ tag }}
+            </a-tag>
+          </div>
+        </template>
+      </a-table>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { useRoute } from "vue-router";
-import { getQuestionBankVoByIdUsingGet } from "@/api/questionBankController.ts";
-import { listQuestionBankQuestionVoByPageUsingPost } from "@/api/questionBankQuestionController.ts";
+import {ref, watch} from "vue";
+import {useRoute} from "vue-router";
+import {getQuestionBankVoByIdUsingGet} from "@/api/questionBankController.ts";
+import {listQuestionBankQuestionVoByPageUsingPost} from "@/api/questionBankQuestionController.ts";
 import getQuestionBankVOByIdUsingGETParams = API.getQuestionBankVOByIdUsingGETParams;
 import QuestionBankQuestionQueryRequest = API.QuestionBankQuestionQueryRequest;
-import { message } from "ant-design-vue";
+import {message} from "ant-design-vue";
 
 // 获取动态路由参数
 const route = useRoute();
@@ -99,7 +107,7 @@ watch(
     (newId) => {
       if (newId) fetchBankDetails();
     },
-    { immediate: true } // 组件加载时立即触发
+    {immediate: true} // 组件加载时立即触发
 );
 
 // 开始刷题按钮逻辑
@@ -116,14 +124,18 @@ const share = () => {
 <style scoped>
 /* 卡片样式 */
 .card-container {
-  display: flex;
   align-items: center;
   background-color: #fff;
   border: 1px solid #eaeaea;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+}
+
+.card-content-wrapper {
+  display: flex; /* 使用 Flexbox 布局 */
+  align-items: center; /* 垂直居中 */
+  gap: 20px; /* 左右间距 */
 }
 
 .card-icon {
@@ -164,34 +176,14 @@ const share = () => {
   margin-top: 20px;
 }
 
-/* 按钮样式 */
-.btn {
-  padding: 8px 16px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
+
+/* 加载提示 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
 }
 
-/* 难度样式 */
-.difficulty-easy {
-  color: #28a745;
-  font-weight: bold;
-}
 
-.difficulty-medium {
-  color: #fd7e14;
-  font-weight: bold;
-}
-
-.difficulty-hard {
-  color: #dc3545;
-  font-weight: bold;
-}
-
-/* 标签样式 */
-.tag {
-  margin-right: 5px;
-  font-size: 12px;
-}
 </style>

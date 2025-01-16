@@ -62,7 +62,6 @@ export const menus: Array<RouteRecordRaw> = [
         name: "管理",
         meta: {
             title: "管理",
-            icon: "el-icon-crown", // 使用 Element Plus 图标
             access: "admin", // 权限枚举
         },
         children: [
@@ -73,6 +72,34 @@ export const menus: Array<RouteRecordRaw> = [
                     title: "用户管理",
                     access: "admin", // 权限枚举
                 },
+                component:()=>import("@/views/admin/user/index.vue")
+            },
+            {
+                path: "/admin/questions",
+                name: "题目管理",
+                meta: {
+                    title: "题目管理",
+                    access: "admin", // 权限枚举
+                },
+                component:()=>import("@/views/admin/questions/index.vue")
+            },
+            {
+                path: "/admin/banks",
+                name: "题库管理",
+                meta: {
+                    title: "题库管理",
+                    access: "admin", // 权限枚举
+                },
+                component:()=>import("@/views/admin/banks/index.vue")
+            },
+            {
+                path: "/admin/questionBankQuestions",
+                name: "题库题目管理",
+                meta: {
+                    title: "题库题目管理",
+                    access: "admin", // 权限枚举
+                },
+                component:()=>import("@/views/admin/banks/index.vue")
             },
         ]
     }
