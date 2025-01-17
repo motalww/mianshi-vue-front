@@ -5,7 +5,7 @@
           ref="formRef"
           name="advanced_search"
           class="ant-advanced-search-form"
-          :model="formState"
+          :model="userQueryRequest"
           @finish="onFinish"
       >
         <a-row :gutter="24">
@@ -17,7 +17,7 @@
                 :rules="field.rules"
             >
               <a-input
-                  v-model="formState[field.name]"
+                  v-model:value="userQueryRequest[field.name]"
                   :placeholder="field.placeholder"
               />
             </a-form-item>
@@ -25,7 +25,7 @@
         </a-row>
         <a-row>
           <a-col :span="24" style="text-align: right">
-            <a-button type="primary" html-type="submit">Search</a-button>
+            <a-button type="primary" @click="search()">Search</a-button>
             <a-button style="margin: 0 8px" @click="clearForm">Clear</a-button>
           </a-col>
         </a-row>
@@ -57,6 +57,7 @@
       <a-pagination
           v-model:current="current"
           v-model:total="total"
+          v-model:pageSize="pageSize"
           :show-total="total => `共 ${total} 条`"
           style="text-align: center">
         <template #itemRender="{ type, originalElement }">
@@ -80,7 +81,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import {onMounted, reactive, ref} from 'vue';
+import {onMounted, reactive, ref, watch} from 'vue';
 import Edit from "@/views/admin/user/edit.vue";
 import {message, type TableColumnsType} from "ant-design-vue";
 import {deleteUserUsingPost, listUserByPageUsingPost} from "@/api/userController.ts";
@@ -108,6 +109,10 @@ const columns: TableColumnsType = [
   },
 ];
 
+const current = ref<number>(1);    // 使用 `ref<number>`
+const pageSize = ref<number>(20);
+const total = ref<number>(0);
+
 interface DataItem {
   key: number;
   userName: string;
@@ -120,24 +125,43 @@ onMounted(() => {
   getUserList()
 })
 
-const userQueryRequest: UserQueryRequest = {}
+const userQueryRequest: UserQueryRequest = reactive({
+  current: current.value,
+  id: '',
+  userAccount:'',
+  mpOpenId: '',
+  pageSize: pageSize.value,
+  sortField: '',
+  sortOrder: '',
+  unionId: '',
+  userName: '',
+  userProfile: '',
+  userRole: '',
+})
 
+const search = async () => {
+  await getUserList()
+}
 
-const current = ref(1);
-const total = ref(0)
 const getUserList = async () => {
   try {
     const res = await listUserByPageUsingPost(userQueryRequest)
     if (res.code === 0) {
-      console.log(res.data)
       data.value = res.data.records
-      total.value = res.data.total
-      console.log(res.data.records)
+      total.value = Number(res.data.total);  // 确保 total 是数字
     }
   } catch (error) {
     message.error(error.message)
   }
 }
+
+watch([current, pageSize], () => {
+  userQueryRequest.current = current;
+  userQueryRequest.pageSize = pageSize;
+  getUserList()
+});
+
+
 const editModal = ref(false)
 const showEditModal = async (userInfo) => {
   editModal.value = true
@@ -160,51 +184,45 @@ const onDelete = async (id) => {
 // 表单字段定义
 const fields = [
   {
-    name: '账户',
+    name: 'id',
+    label: 'ID',
+    placeholder: '请输入ID',
+  },
+    {
+    name:'mpOpenId',
+    label: 'OpenId',
+    placeholder: '请输入OpenId',
+  },
+    {
+    name: 'unionId',
+    label: 'UnionId',
+    placeholder: '请输入UnionId',
+  },
+  {
+    name: 'userAccount',
     label: '账户',
-    rules: [{required: true, message: '请输入账户'}],
     placeholder: '请输入账户',
   },
   {
-    name: '用户名',
+    name: 'userName',
     label: '用户名',
-    rules: [{required: true, message: '请输入用户名'}],
     placeholder: '请输入用户名',
   },
   {
-    name: 'field3',
-    label: '字段3',
-    rules: [{required: true, message: '请输入字段3'}],
-    placeholder: '请输入字段3',
+    name: 'userProfile',
+    label: '用户简介',
+    placeholder: '请输入用户简介',
   },
   {
-    name: 'field4',
-    label: '字段4',
-    rules: [{required: true, message: '请输入字段4'}],
-    placeholder: '请输入字段4',
+    name: 'userRole',
+    label: '用户角色',
+    placeholder: '请输入用户角色',
   },
 ];
 
-// 表单状态
-const formState = reactive({
-  id: '',
-  mpOpenId: '',
-  // sortField: '',
-  // sortOrder: '',
-  unionId: '',
-  userName: '',
-  userProfile: '',
-  userRole: '',
-});
-
-// 表单提交处理
-const onFinish = (values: any) => {
-  console.log('Received values of form: ', values);
-};
-
-// 清空表单字段
+const formRef = ref();
 const clearForm = () => {
-  fields.value?.resetFields();
+  formRef.value?.resetFields();
 };
 
 

@@ -638,6 +638,7 @@ declare namespace API {
   type UserQueryRequest = {
     current?: number;
     id?: number;
+    userAccount?:number;
     mpOpenId?: string;
     pageSize?: number;
     sortField?: string;

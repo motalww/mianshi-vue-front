@@ -17,15 +17,16 @@
                 :rules="field.rules"
             >
               <a-input
-                  v-model="questionQueryRequest[field.name]"
+                  v-model:value="questionQueryRequest[field.name]"
                   :placeholder="field.placeholder"
+                  @blur="handleTagsInput(field.name)"
               />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row>
           <a-col :span="24" style="text-align: right">
-            <a-button type="primary" html-type="submit">Search</a-button>
+            <a-button type="primary" @click="search()">Search</a-button>
             <a-button style="margin: 0 8px" @click="clearForm">Clear</a-button>
           </a-col>
         </a-row>
@@ -34,6 +35,7 @@
   </div>
   <div>
     <a-card title="题目管理">
+      <question-add @addSuccess="handleAddSuccess"/>
       <a-table :columns="columns" :data-source="data" :pagination="false" :scroll="{ x: 2000}">
         <template #bodyCell="{ column,record  }">
           <template v-if="column.key === 'operation'">
@@ -55,7 +57,7 @@
           <template v-else-if="column.key === 'tags'">
             <span>
               <a-tag v-for="(tag, index) in JSON.parse(record.tags)" :key="index">
-              {{ tag}}
+              {{ tag }}
             </a-tag>
             </span>
           </template>
@@ -64,6 +66,7 @@
       <a-pagination
           v-model:current="current"
           v-model:total="total"
+          v-model:pageSize="pageSize"
           :show-total="total => `共 ${total} 条`"
           style="text-align: center">
         <template #itemRender="{ type, originalElement }">
@@ -74,6 +77,8 @@
       </a-pagination>
     </a-card>
   </div>
+
+
   <div>
     <a-modal
         v-model:open="editModal"
@@ -87,11 +92,12 @@
   </div>
 </template>
 <script lang="ts" setup>
-import {onMounted, reactive, ref} from 'vue';
+import {onMounted, reactive, ref, watch} from 'vue';
 import Edit from "@/views/admin/user/edit.vue";
 import {message, type TableColumnsType} from "ant-design-vue";
 import {deleteUserUsingPost} from "@/api/userController.ts";
 import {listQuestionByPageUsingPost} from "@/api/questionController.ts";
+import QuestionAdd from "@/views/admin/questions/questionAdd.vue";
 
 const columns: TableColumnsType = [
   {title: '题目', width: 100, dataIndex: 'title', key: 'title', width: 200},
@@ -121,39 +127,59 @@ interface DataItem {
   address: string;
 }
 
+const current = ref<number>(1);    // 使用 `ref<number>`
+const pageSize = ref<number>(20);
+const total = ref<number>(0);
+
 const data: DataItem[] = ref([]);
 onMounted(() => {
-  getUserList()
+  getQuestionList()
 })
 
 // 表单状态
 const questionQueryRequest: API.QuestionQueryRequest = reactive({
   answer: '',
-  content: '',
-  // current: '',
+  current: current.value,
   id: '',
-  notId: '',
-  // pageSize: '',
+  pageSize: pageSize.value,
   questionBankId: '',
   searchText: '',
   sortField: '',
   sortOrder: '',
-  // tags: '',
+  tags: [] as string[],  // 初始化为一个空的字符串数组
   title: '',
   userId: '',
 });
 
+const search = async () => {
+  await getQuestionList()
+}
+watch([current, pageSize], () => {
+  questionQueryRequest.current = current;
+  questionQueryRequest.pageSize = pageSize;
+  getQuestionList()
+});
 
-const current = ref(1);
-const total = ref(0)
-const getUserList = async () => {
+const handleTagsInput = (fieldName: string) => {
+  if (fieldName === 'tags') {
+    // 将 tags 字符串转换为数组，以逗号分隔
+    questionQueryRequest.tags = questionQueryRequest.tags
+        .split(',')
+        .map(tag => tag.trim()) // 去除每个标签的前后空格
+        .filter(tag => tag);    // 过滤掉空标签
+  }
+};
+
+const handleAddSuccess = async () => {
+  await getQuestionList(); // 刷新列表
+};
+
+const getQuestionList = async () => {
   try {
     const res = await listQuestionByPageUsingPost(questionQueryRequest)
     if (res.code === 0) {
-      console.log(res.data)
       data.value = res.data.records
       total.value = res.data.total
-      console.log(res.data.records)
     }
   } catch (error) {
     message.error(error.message)
@@ -162,8 +188,8 @@ const getUserList = async () => {
 const editModal = ref(false)
 const showEditModal = async (userInfo) => {
   editModal.value = true
-  console.log(userInfo)
 }
+
 const onDelete = async (id) => {
   try {
     const deleteRequest: API.DeleteRequest = {
@@ -181,36 +207,31 @@ const onDelete = async (id) => {
 // 表单字段定义
 const fields = [
   {
-    name: '账户',
-    label: '账户',
-    rules: [{required: true, message: '请输入账户'}],
-    placeholder: '请输入账户',
+    name: 'id',
+    label: 'ID',
+    placeholder: '请输入id',
   },
   {
-    name: '用户名',
-    label: '用户名',
-    rules: [{required: true, message: '请输入用户名'}],
-    placeholder: '请输入用户名',
+    name: 'userId',
+    label: 'userId',
+    placeholder: '请输入userId',
   },
   {
-    name: 'field3',
-    label: '字段3',
-    rules: [{required: true, message: '请输入字段3'}],
-    placeholder: '请输入字段3',
+    name: 'title',
+    label: '题目',
+    placeholder: '请输入题目',
   },
   {
-    name: 'field4',
-    label: '字段4',
-    rules: [{required: true, message: '请输入字段4'}],
-    placeholder: '请输入字段4',
+    name: 'answer',
+    label: '答案',
+    placeholder: '请输入答案',
+  },
+  {
+    name: 'tags',
+    label: '标签',
+    placeholder: '标签间使用","隔开',
   },
 ];
-
-
-// 表单提交处理
-const onFinish = (values: any) => {
-  console.log('Received values of form: ', values);
-};
 
 // 清空表单字段
 const clearForm = () => {

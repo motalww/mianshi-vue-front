@@ -5,7 +5,7 @@
           ref="formRef"
           name="advanced_search"
           class="ant-advanced-search-form"
-          :model="formState"
+          :model="questionBankQueryRequest"
           @finish="onFinish"
       >
         <a-row :gutter="24">
@@ -86,8 +86,8 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, reactive, ref} from 'vue';
-import {message, type TableColumnsType} from "ant-design-vue";
+import {onMounted, reactive, ref, watch} from 'vue';
+import {type FormInstance, message, type TableColumnsType} from "ant-design-vue";
 import {deleteUserUsingPost} from "@/api/userController.ts";
 import {listQuestionBankByPageUsingPost} from "@/api/questionBankController.ts";
 import Edit from "@/views/admin/user/edit.vue";
@@ -114,20 +114,25 @@ const data: DataItem[] = ref([]);
 onMounted(() => {
   getBankList()
 })
+const current = ref<number>(1);    // 使用 `ref<number>`
+const pageSize = ref<number>(20);
+const total = ref<number>(0);
 
 // 表单状态
 const questionBankQueryRequest: API.QuestionBankQueryRequest = reactive({
-  description: '',
-  // needQueryQuestionList: '',
-  // picture: '',
-  // searchText: '',
-  // sortField: '',
-  // sortOrder: '',
+  id:'',
   title: '',
+  description: '',
+  userId: '',
+  current: current.value,
+  pageSize: pageSize.value,
 });
 
-const current = ref(1);
-const total = ref(0);
+watch([current, pageSize], () => {
+  questionBankQueryRequest.current = current;
+  questionBankQueryRequest.pageSize = pageSize;
+  getBankList()
+});
 
 // 获取数据
 const getBankList = async () => {
@@ -146,10 +151,11 @@ const getBankList = async () => {
 const search = async () => {
   await getBankList()
 }
-
+const formRef = ref<FormInstance>();
 // 清空表单
 const clearForm = () => {
-  formRef.value?.resetFields();
+  console.log(formRef)
+  formRef?.value.resetFields();
 }
 
 // 分页处理
@@ -180,15 +186,23 @@ const onDelete = async (id: string) => {
 // 表单字段定义
 const fields = reactive([
   {
+    name: 'id',
+    label: 'ID',
+    placeholder: '请输入id',
+  },
+  {
+    name: 'userId',
+    label: 'userId',
+    placeholder: '请输入userId',
+  },
+  {
     name: 'title',
     label: '标题',
-    rules: [{required: true, message: '请输入标题'}],
     placeholder: '请输入标题',
   },
   {
     name: 'description',
     label: '描述',
-    rules: [{required: true, message: '请输入描述'}],
     placeholder: '请输入描述',
   },
 
